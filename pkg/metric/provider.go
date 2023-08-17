@@ -77,7 +77,7 @@ func newResources() *resource.Resource {
 	)
 }
 
-func initProvider() {
+func InitProvider() {
 	lock.Lock()
 	defer lock.Unlock()
 
@@ -97,4 +97,8 @@ func initProvider() {
 	)
 
 	otel.SetMeterProvider(provider)
+}
+
+func Provider() *metric.MeterProvider {
+	return provider
 }

@@ -83,7 +83,7 @@ func newResources() *resource.Resource {
 	)
 }
 
-func initProvider() {
+func InitProvider() {
 	lock.Lock()
 	defer lock.Unlock()
 
@@ -109,4 +109,8 @@ func initProvider() {
 
 	otel.SetTracerProvider(provider)
 	otel.SetTextMapPropagator(propagation.TraceContext{})
+}
+
+func Provider() *trace.TracerProvider {
+	return provider
 }
