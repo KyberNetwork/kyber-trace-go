@@ -2,16 +2,20 @@ package example
 
 import (
 	"context"
-	"time"
 
 	"github.com/KyberNetwork/kyber-trace-go/pkg/metric"
+	_ "github.com/KyberNetwork/kyber-trace-go/tools" // this is important
 )
 
 func PushMetric() {
-	counter, err := metric.Meter().Int64Counter("example_count")
+	counter, err := metric.Meter().Int64Counter("example_count_edge_4")
 	if err != nil {
 		panic(err)
 	}
+	ctx := context.Background()
 	counter.Add(context.Background(), 1)
-	time.Sleep(10 * time.Second)
+	err = metric.Flush(ctx)
+	if err != nil {
+		panic(err)
+	}
 }
