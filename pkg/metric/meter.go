@@ -2,6 +2,7 @@ package metric
 
 import (
 	"context"
+	"errors"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
@@ -16,5 +17,9 @@ func Meter() metric.Meter {
 }
 
 func Flush(ctx context.Context) error {
-	return otel.GetMeterProvider().(*metricsdk.MeterProvider).ForceFlush(ctx)
+	if m, ok := otel.GetMeterProvider().(*metricsdk.MeterProvider); ok {
+		return m.ForceFlush(ctx)
+	} else {
+		return errors.New("no meter provider was initialized")
+	}
 }
