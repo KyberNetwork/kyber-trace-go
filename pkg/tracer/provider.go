@@ -93,7 +93,7 @@ func initProvider() {
 
 	exporter, err := newOTLPExporter()
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Printf("kyber-trace-go: failed to init tracer provider, %s", err)
 		return
 	}
 
