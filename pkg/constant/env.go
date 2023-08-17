@@ -1,7 +1,7 @@
 package constant
 
 const (
-	EnvKeyOTLPEnable         = "OTLP_ENABLE"
+	EnvKeyOTLPEnabled        = "OTLP_ENABLED"
 	EnvKeyOTLPCollectorUrl   = "OTLP_COLLECTOR_URL"
 	EnvKeyOTLPInsecure       = "OTLP_INSECURE"
 	EnvKeyOTLPProtocol       = "OTLP_PROTOCOL"
