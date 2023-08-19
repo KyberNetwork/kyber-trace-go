@@ -5,4 +5,5 @@ const (
 	OTLPDefaultServiceVersion = "0.1.0"
 	OTLPProtocolGRPC          = "grpc"
 	OTLPProtocolHTTP          = "http"
+	OTLPDefaultSampleRate     = 0.5
 )

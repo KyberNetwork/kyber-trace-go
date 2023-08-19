@@ -2,6 +2,7 @@ package env
 
 import (
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -18,4 +19,17 @@ func BoolFromEnv(key string) bool {
 	v := os.Getenv(key)
 	v = strings.ToLower(strings.TrimSpace(v))
 	return v != "" && v != "0" && v != "false" && v != "no"
+}
+
+// FloatFromEnv returns the float number for the given key
+// and falls back to the given defaultValue if not set
+func FloatFromEnv(key string, defaultValue float64) float64 {
+	str := os.Getenv(key)
+	if str == "" {
+		return defaultValue
+	}
+	if s, err := strconv.ParseFloat(str, 64); err == nil {
+		return s
+	}
+	return defaultValue
 }

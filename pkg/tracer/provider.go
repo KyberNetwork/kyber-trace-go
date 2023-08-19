@@ -100,9 +100,11 @@ func InitProvider() {
 	// Register the trace exporter with a TracerProvider, using a batch span processor to aggregate spans before export.
 	bsp := trace.NewBatchSpanProcessor(exporter)
 
+	sampleRate := env.FloatFromEnv(constant.EnvKeyOTLPTraceSampleRate, constant.OTLPDefaultSampleRate)
+
 	// init tracer provider
 	provider = trace.NewTracerProvider(
-		trace.WithSampler(trace.AlwaysSample()),
+		trace.WithSampler(trace.TraceIDRatioBased(sampleRate)),
 		trace.WithResource(newResources()),
 		trace.WithSpanProcessor(bsp),
 	)
