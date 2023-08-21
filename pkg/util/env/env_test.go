@@ -50,14 +50,24 @@ func TestFloatFromEnv(t *testing.T) {
 	// mock
 	_ = os.Setenv("test_float_from_env", "0.75")
 	_ = os.Setenv("test_float_from_env_empty", "")
-	_ = os.Setenv("test_float_from_env_trim", "0.75 ")
+	_ = os.Setenv("test_float_from_env_string", "zeropointfive")
+	_ = os.Setenv("test_float_from_env_trim", " 0.75 ")
+	_ = os.Setenv("test_float_from_env_0", "+0.75")
+	_ = os.Setenv("test_float_from_env_1", "-0.75")
+	_ = os.Setenv("test_float_from_env_2", ".75")
+	_ = os.Setenv("test_float_from_env_3", "01.75")
 
 	// Test default value
 	assert.Equal(t, 0.75, FloatFromEnv("not_exists", 0.75))
 	assert.Equal(t, 0.75, FloatFromEnv("test_float_from_env_empty", 0.75))
+	assert.Equal(t, 0.75, FloatFromEnv("test_float_from_env_string", 0.75))
 
 	// Test not default value
 	assert.Equal(t, 0.75, FloatFromEnv("test_float_from_env", 0.5))
+	assert.Equal(t, 0.75, FloatFromEnv("test_float_from_env_0", 0.5))
+	assert.Equal(t, -0.75, FloatFromEnv("test_float_from_env_1", 0.5))
+	assert.Equal(t, 0.75, FloatFromEnv("test_float_from_env_2", 0.5))
+	assert.Equal(t, 1.75, FloatFromEnv("test_float_from_env_3", 0.5))
 
 	// Test trim space
 	assert.Equal(t, 0.75, FloatFromEnv("test_float_from_env_trim", 0.5))
