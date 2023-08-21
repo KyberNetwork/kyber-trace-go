@@ -24,9 +24,9 @@ func BoolFromEnv(key string) bool {
 // FloatFromEnv returns the float number for the given key
 // and falls back to the given defaultValue if not set
 func FloatFromEnv(key string, defaultValue float64) float64 {
-	str := os.Getenv(key)
-	if str == "" {
-		return defaultValue
+	str := ""
+	if str = os.Getenv(key); str != "" {
+		str = strings.TrimSpace(str)
 	}
 	if s, err := strconv.ParseFloat(str, 64); err == nil {
 		return s

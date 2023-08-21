@@ -45,3 +45,20 @@ func TestBoolFromEnv(t *testing.T) {
 	assert.Equal(t, true, BoolFromEnv("key_yes"))
 	assert.Equal(t, false, BoolFromEnv("key_no"))
 }
+
+func TestFloatFromEnv(t *testing.T) {
+	// mock
+	_ = os.Setenv("test_float_from_env", "0.75")
+	_ = os.Setenv("test_float_from_env_empty", "")
+	_ = os.Setenv("test_float_from_env_trim", "0.75 ")
+
+	// Test default value
+	assert.Equal(t, 0.75, FloatFromEnv("not_exists", 0.75))
+	assert.Equal(t, 0.75, FloatFromEnv("test_float_from_env_empty", 0.75))
+
+	// Test not default value
+	assert.Equal(t, 0.75, FloatFromEnv("test_float_from_env", 0.5))
+
+	// Test trim space
+	assert.Equal(t, 0.75, FloatFromEnv("test_float_from_env_trim", 0.5))
+}
