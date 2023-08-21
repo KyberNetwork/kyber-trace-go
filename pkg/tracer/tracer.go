@@ -9,5 +9,5 @@ import (
 )
 
 func Tracer() trace.Tracer {
-	return otel.Tracer(env.StringFromEnv(constant.EnvKeyOTLPServiceName, constant.OTLPDefaultServiceName))
+	return otel.Tracer(env.StringFromEnv(constant.EnvKeyOtelServiceName, constant.OtelDefaultServiceName))
 }

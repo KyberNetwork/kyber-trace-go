@@ -9,5 +9,5 @@ import (
 )
 
 func Meter() metric.Meter {
-	return otel.GetMeterProvider().Meter(env.StringFromEnv(constant.EnvKeyOTLPServiceName, constant.OTLPDefaultServiceName))
+	return otel.GetMeterProvider().Meter(env.StringFromEnv(constant.EnvKeyOtelServiceName, constant.OtelDefaultServiceName))
 }

@@ -1,8 +1,9 @@
 package constant
 
 const (
-	OTLPDefaultServiceName    = "default-service-name"
-	OTLPDefaultServiceVersion = "0.1.0"
-	OTLPProtocolGRPC          = "grpc"
-	OTLPProtocolHTTP          = "http"
+	OtelDefaultServiceName    = "default-service-name"
+	OtelDefaultServiceVersion = "0.1.0"
+	OtelProtocolGRPC          = "grpc"
+	OtelProtocolHTTP          = "http"
+	OtelDefaultSampleRate     = 0.5
 )
