@@ -6,7 +6,7 @@ import (
 )
 
 func init() {
-	if env.BoolFromEnv(constant.EnvKeyOTLPEnabled) {
+	if env.BoolFromEnv(constant.EnvKeyOtelEnabled) {
 		InitProvider()
 	}
 }

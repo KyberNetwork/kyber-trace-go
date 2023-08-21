@@ -54,12 +54,12 @@ func newOTLPExporter() (metric.Exporter, error) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
-	providerServerUrl := env.StringFromEnv(constant.EnvKeyOTLPCollectorUrl, "")
-	isInsecure := env.BoolFromEnv(constant.EnvKeyOTLPInsecure)
-	protocol := env.StringFromEnv(constant.EnvKeyOTLPProtocol, constant.OTLPProtocolGRPC)
+	providerServerUrl := env.StringFromEnv(constant.EnvKeyOtelCollectorUrl, "")
+	isInsecure := env.BoolFromEnv(constant.EnvKeyOtelInsecure)
+	protocol := env.StringFromEnv(constant.EnvKeyOtelProtocol, constant.OtelProtocolGRPC)
 
 	// gRPC
-	if protocol == constant.OTLPProtocolGRPC {
+	if protocol == constant.OtelProtocolGRPC {
 		return newGRPCExporter(ctx, providerServerUrl, isInsecure)
 	}
 
@@ -72,8 +72,8 @@ func newResources() *resource.Resource {
 	// ref: https://opentelemetry.io/docs/instrumentation/go/resources/
 	return resource.NewWithAttributes(
 		semconv.SchemaURL,
-		semconv.ServiceName(env.StringFromEnv(constant.EnvKeyOTLPServiceName, constant.OTLPDefaultServiceName)),
-		semconv.ServiceVersion(env.StringFromEnv(constant.EnvKeyOTLPServiceVersion, constant.OTLPDefaultServiceVersion)),
+		semconv.ServiceName(env.StringFromEnv(constant.EnvKeyOtelServiceName, constant.OtelDefaultServiceName)),
+		semconv.ServiceVersion(env.StringFromEnv(constant.EnvKeyOtelServiceVersion, constant.OtelDefaultServiceVersion)),
 	)
 }
 
