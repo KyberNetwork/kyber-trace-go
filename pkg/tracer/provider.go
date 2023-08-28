@@ -3,6 +3,7 @@ package tracer
 import (
 	"context"
 	"fmt"
+	"net"
 	"sync"
 	"time"
 
@@ -23,9 +24,10 @@ import (
 var provider *trace.TracerProvider
 var lock sync.Mutex
 
-func newGRPCExporter(ctx context.Context, providerServerUrl string, isInsecure bool) (*otlptrace.Exporter, error) {
+func newGRPCExporter(ctx context.Context, agentHost string, isInsecure bool) (*otlptrace.Exporter, error) {
+	addr := net.JoinHostPort(agentHost, env.StringFromEnv(constant.EnvKeyOtelTraceAgentGRPCPort, "4317"))
 	clientOpts := []otlptracegrpc.Option{
-		otlptracegrpc.WithEndpoint(providerServerUrl),
+		otlptracegrpc.WithEndpoint(addr),
 		otlptracegrpc.WithDialOption(grpc.WithBlock()),
 	}
 	if isInsecure {
@@ -40,9 +42,10 @@ func newGRPCExporter(ctx context.Context, providerServerUrl string, isInsecure b
 	return exporter, nil
 }
 
-func newHTTPExporter(ctx context.Context, providerServerUrl string, isInsecure bool) (*otlptrace.Exporter, error) {
+func newHTTPExporter(ctx context.Context, agentHost string, isInsecure bool) (*otlptrace.Exporter, error) {
+	addr := net.JoinHostPort(agentHost, env.StringFromEnv(constant.EnvKeyOtelTraceAgentHTTPPort, "4318"))
 	clientOpts := []otlptracehttp.Option{
-		otlptracehttp.WithEndpoint(providerServerUrl),
+		otlptracehttp.WithEndpoint(addr),
 	}
 	if isInsecure {
 		clientOpts = append(clientOpts, otlptracehttp.WithInsecure())
@@ -60,17 +63,17 @@ func newOTLPExporter() (*otlptrace.Exporter, error) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
-	providerServerUrl := env.StringFromEnv(constant.EnvKeyOtelCollectorUrl, "")
+	agentHost := env.StringFromEnv(constant.EnvKeyOtelAgentHost, "")
 	isInsecure := env.BoolFromEnv(constant.EnvKeyOtelInsecure)
 	protocol := env.StringFromEnv(constant.EnvKeyOtelProtocol, constant.OtelProtocolGRPC)
 
 	// gRPC
 	if protocol == constant.OtelProtocolGRPC {
-		return newGRPCExporter(ctx, providerServerUrl, isInsecure)
+		return newGRPCExporter(ctx, agentHost, isInsecure)
 	}
 
 	// HTTP
-	return newHTTPExporter(ctx, providerServerUrl, isInsecure)
+	return newHTTPExporter(ctx, agentHost, isInsecure)
 }
 
 func newResources() *resource.Resource {
