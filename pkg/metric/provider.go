@@ -3,6 +3,7 @@ package metric
 import (
 	"context"
 	"fmt"
+	"net"
 	"sync"
 	"time"
 
@@ -21,9 +22,11 @@ import (
 var provider *metric.MeterProvider
 var lock sync.Mutex
 
-func newGRPCExporter(ctx context.Context, providerServerUrl string, isInsecure bool) (metric.Exporter, error) {
+func newGRPCExporter(ctx context.Context, agentHost string, isInsecure bool) (metric.Exporter, error) {
+	addr := net.JoinHostPort(agentHost, env.StringFromEnv(
+		constant.EnvKeyOtelMetricAgentGRPCPort, constant.OtelDefaultMetricAgentGRPCPort))
 	clientOpts := []otlpmetricgrpc.Option{
-		otlpmetricgrpc.WithEndpoint(providerServerUrl),
+		otlpmetricgrpc.WithEndpoint(addr),
 		otlpmetricgrpc.WithDialOption(grpc.WithBlock()),
 	}
 	if isInsecure {
@@ -36,9 +39,11 @@ func newGRPCExporter(ctx context.Context, providerServerUrl string, isInsecure b
 	return exporter, nil
 }
 
-func newHTTPExporter(ctx context.Context, providerServerUrl string, isInsecure bool) (metric.Exporter, error) {
+func newHTTPExporter(ctx context.Context, agentHost string, isInsecure bool) (metric.Exporter, error) {
+	addr := net.JoinHostPort(agentHost, env.StringFromEnv(
+		constant.EnvKeyOtelMetricAgentHTTPPort, constant.OtelDefaultMetricAgentHTTPPort))
 	clientOpts := []otlpmetrichttp.Option{
-		otlpmetrichttp.WithEndpoint(providerServerUrl),
+		otlpmetrichttp.WithEndpoint(addr),
 	}
 	if isInsecure {
 		clientOpts = append(clientOpts, otlpmetrichttp.WithInsecure())
@@ -54,17 +59,17 @@ func newOTLPExporter() (metric.Exporter, error) {
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()
-	providerServerUrl := env.StringFromEnv(constant.EnvKeyOtelCollectorUrl, "")
+	agentHost := env.StringFromEnv(constant.EnvKeyOtelAgentHost, "")
 	isInsecure := env.BoolFromEnv(constant.EnvKeyOtelInsecure)
 	protocol := env.StringFromEnv(constant.EnvKeyOtelProtocol, constant.OtelProtocolGRPC)
 
 	// gRPC
 	if protocol == constant.OtelProtocolGRPC {
-		return newGRPCExporter(ctx, providerServerUrl, isInsecure)
+		return newGRPCExporter(ctx, agentHost, isInsecure)
 	}
 
 	// HTTP
-	return newHTTPExporter(ctx, providerServerUrl, isInsecure)
+	return newHTTPExporter(ctx, agentHost, isInsecure)
 }
 
 func newResources() *resource.Resource {
