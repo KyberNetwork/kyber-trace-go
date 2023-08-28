@@ -23,7 +23,8 @@ var provider *metric.MeterProvider
 var lock sync.Mutex
 
 func newGRPCExporter(ctx context.Context, agentHost string, isInsecure bool) (metric.Exporter, error) {
-	addr := net.JoinHostPort(agentHost, env.StringFromEnv(constant.EnvKeyOtelMetricAgentGRPCPort, "4315"))
+	addr := net.JoinHostPort(agentHost, env.StringFromEnv(
+		constant.EnvKeyOtelMetricAgentGRPCPort, constant.OtelDefaultMetricAgentGRPCPort))
 	clientOpts := []otlpmetricgrpc.Option{
 		otlpmetricgrpc.WithEndpoint(addr),
 		otlpmetricgrpc.WithDialOption(grpc.WithBlock()),
@@ -39,7 +40,8 @@ func newGRPCExporter(ctx context.Context, agentHost string, isInsecure bool) (me
 }
 
 func newHTTPExporter(ctx context.Context, agentHost string, isInsecure bool) (metric.Exporter, error) {
-	addr := net.JoinHostPort(agentHost, env.StringFromEnv(constant.EnvKeyOtelMetricAgentHTTPPort, "4316"))
+	addr := net.JoinHostPort(agentHost, env.StringFromEnv(
+		constant.EnvKeyOtelMetricAgentHTTPPort, constant.OtelDefaultMetricAgentHTTPPort))
 	clientOpts := []otlpmetrichttp.Option{
 		otlpmetrichttp.WithEndpoint(addr),
 	}

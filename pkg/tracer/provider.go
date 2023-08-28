@@ -25,7 +25,8 @@ var provider *trace.TracerProvider
 var lock sync.Mutex
 
 func newGRPCExporter(ctx context.Context, agentHost string, isInsecure bool) (*otlptrace.Exporter, error) {
-	addr := net.JoinHostPort(agentHost, env.StringFromEnv(constant.EnvKeyOtelTraceAgentGRPCPort, "4317"))
+	addr := net.JoinHostPort(agentHost, env.StringFromEnv(
+		constant.EnvKeyOtelTraceAgentGRPCPort, constant.OtelDefaultTraceAgentGRPCPort))
 	clientOpts := []otlptracegrpc.Option{
 		otlptracegrpc.WithEndpoint(addr),
 		otlptracegrpc.WithDialOption(grpc.WithBlock()),
@@ -43,7 +44,8 @@ func newGRPCExporter(ctx context.Context, agentHost string, isInsecure bool) (*o
 }
 
 func newHTTPExporter(ctx context.Context, agentHost string, isInsecure bool) (*otlptrace.Exporter, error) {
-	addr := net.JoinHostPort(agentHost, env.StringFromEnv(constant.EnvKeyOtelTraceAgentHTTPPort, "4318"))
+	addr := net.JoinHostPort(agentHost, env.StringFromEnv(
+		constant.EnvKeyOtelTraceAgentHTTPPort, constant.OtelDefaultTraceAgentHTTPPort))
 	clientOpts := []otlptracehttp.Option{
 		otlptracehttp.WithEndpoint(addr),
 	}
