@@ -21,9 +21,9 @@ func Tracing() {
 	// export OTEL_METRIC_AGENT_GRPC_PORT=4315
 	// export OTEL_INSECURE=true
 
-	// When you deploy your service using helm chart with base-service from version 0.5.15, the following variables will be injected directly via helm chart:
+	// When you deploy your service using helm chart with base-service from version 0.5.16, the following variables will be injected directly via helm chart:
 	// OTEL_AGENT_HOST, OTEL_SERVICE_NAME, OTEL_SERVICE_VERSION, OTEL_TRACE_AGENT_GRPC_PORT, OTEL_METRIC_AGENT_GRPC_PORT, OTEL_INSECURE
-	// You just need to set OTEL_ENABLED, OTEL_TRACE_SAMPLE_RATE.
+	// You just need to set OTEL_ENABLED.
 
 	ctx := context.Background()
 
