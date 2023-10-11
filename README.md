@@ -4,6 +4,7 @@
 This is a library that makes it easier to integrate with Kyber's self-hosted open tracing
 
 ## Add this lib to your project
+- Require go version 1.21 or later
 - Step 1:
 ```
 $ export GOPRIVATE=github.com/KyberNetwork/kyber-trace-go
