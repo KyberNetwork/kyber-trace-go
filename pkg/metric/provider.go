@@ -75,11 +75,27 @@ func newOTLPExporter() (metric.Exporter, error) {
 func newResources() *resource.Resource {
 	// Ensure default SDK resources and the required service name are set.
 	// ref: https://opentelemetry.io/docs/instrumentation/go/resources/
-	return resource.NewWithAttributes(
-		semconv.SchemaURL,
-		semconv.ServiceName(env.StringFromEnv(constant.EnvKeyOtelServiceName, constant.OtelDefaultServiceName)),
-		semconv.ServiceVersion(env.StringFromEnv(constant.EnvKeyOtelServiceVersion, constant.OtelDefaultServiceVersion)),
-	)
+	// default resources
+	resources := resource.Default()
+
+	// adding extra resources
+	extraResources, err := resource.New(context.Background(),
+		resource.WithHost(),
+		resource.WithAttributes(
+			semconv.ServiceName(env.StringFromEnv(constant.EnvKeyOtelServiceName, constant.OtelDefaultServiceName)),
+			semconv.ServiceVersion(env.StringFromEnv(constant.EnvKeyOtelServiceVersion, constant.OtelDefaultServiceVersion)),
+		))
+	if err != nil {
+		return resources
+	}
+
+	// merge default and extra resources
+	resources, err = resource.Merge(resources, extraResources)
+	if err != nil {
+		return resources
+	}
+
+	return resources
 }
 
 func InitProvider() {
