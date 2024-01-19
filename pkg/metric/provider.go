@@ -114,7 +114,7 @@ func InitProvider() {
 		return
 	}
 
-	if constant.EnvKeyOtelEnabledExponentialHistogramMetrics == "true" {
+	if isEnabledExponentialHistogram := env.BoolFromEnv(constant.EnvKeyOtelEnabledExponentialHistogramMetrics); isEnabledExponentialHistogram {
 		exponentialHistogramView := metric.NewView(
 			metric.Instrument{
 				Kind: metric.InstrumentKindHistogram,
