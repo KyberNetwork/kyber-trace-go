@@ -106,15 +106,31 @@ func InitProvider() {
 		return
 	}
 
+	metricsView := make([]metric.View, 0)
+
 	exporter, err := newOTLPExporter()
 	if err != nil {
 		fmt.Printf("kyber-trace-go: failed to init metric provider, %s\n", err)
 		return
 	}
 
+	if constant.EnvKeyOtelEnabledExponentialHistogramMetrics == "true" {
+		exponentialHistogramView := metric.NewView(
+			metric.Instrument{
+				Kind: metric.InstrumentKindHistogram,
+			}, metric.Stream{
+				Aggregation: metric.AggregationBase2ExponentialHistogram{
+					MaxSize:  30,
+					MaxScale: 3,
+				},
+			})
+		metricsView = append(metricsView, exponentialHistogramView)
+	}
+
 	provider = metric.NewMeterProvider(
 		metric.WithResource(newResources()),
 		metric.WithReader(metric.NewPeriodicReader(exporter)),
+		metric.WithView(metricsView...),
 	)
 
 	otel.SetMeterProvider(provider)
