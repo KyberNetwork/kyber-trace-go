@@ -72,3 +72,21 @@ func TestFloatFromEnv(t *testing.T) {
 	// Test trim space
 	assert.Equal(t, 0.75, FloatFromEnv("test_float_from_env_trim", 0.5))
 }
+
+func TestIntFromEnv(t *testing.T) {
+	// mock
+	_ = os.Setenv("test_int_from_env", "75")
+	_ = os.Setenv("test_int_from_env_empty", "")
+	_ = os.Setenv("test_int_from_env_string", "seventyfive")
+
+	// Test default value
+	assert.Equal(t, int64(75), IntFromEnv("not_exists", 75))
+	assert.Equal(t, int64(75), IntFromEnv("test_int_from_env_empty", 75))
+	assert.Equal(t, int64(75), IntFromEnv("test_int_from_env_string", 75))
+
+	// Test not default value
+	assert.Equal(t, int64(75), IntFromEnv("test_int_from_env", 50))
+
+	// Test trim space
+	assert.Equal(t, int64(75), IntFromEnv("test_int_from_env", 50))
+}
