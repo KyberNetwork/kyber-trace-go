@@ -114,14 +114,20 @@ func InitProvider() {
 		return
 	}
 
-	if isEnabledExponentialHistogram := env.BoolFromEnv(constant.EnvKeyOtelEnabledExponentialHistogramMetrics); isEnabledExponentialHistogram {
+	if env.BoolFromEnv(constant.EnvKeyOtelEnabledExponentialHistogramMetrics) {
 		exponentialHistogramView := metric.NewView(
 			metric.Instrument{
 				Kind: metric.InstrumentKindHistogram,
 			}, metric.Stream{
 				Aggregation: metric.AggregationBase2ExponentialHistogram{
-					MaxSize:  30,
-					MaxScale: 3,
+					MaxSize: int32(
+						env.IntFromEnv(
+							constant.EnvKeyOtelExponentialHistogramMetricsMaxSize,
+							constant.OtelDefaultExponentialHistogramMetricsMaxSize)),
+					MaxScale: int32(
+						env.IntFromEnv(
+							constant.EnvKeyOtelExponentialHistogramMetricsMaxScale,
+							constant.OtelDefaultExponentialHistogramMetricsMaxScale)),
 				},
 			})
 		metricsView = append(metricsView, exponentialHistogramView)
