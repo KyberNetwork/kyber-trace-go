@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
@@ -138,6 +139,20 @@ func InitProvider() {
 		metric.WithReader(metric.NewPeriodicReader(exporter)),
 		metric.WithView(metricsView...),
 	)
+
+	// runtime metrics
+	runtimeInterval, err := time.ParseDuration(env.StringFromEnv(
+		constant.EnvKeyOtelRuntimeMetricsInterval, constant.OtelDefaultRuntimeMetricsInterval.String()))
+	if err != nil {
+		runtimeInterval = constant.OtelDefaultRuntimeMetricsInterval
+	}
+	err = runtime.Start(
+		runtime.WithMinimumReadMemStatsInterval(runtimeInterval),
+		runtime.WithMeterProvider(provider),
+	)
+	if err != nil {
+		fmt.Printf("kyber-trace-go: failed to start runtime metrics, %s\n", err)
+	}
 
 	otel.SetMeterProvider(provider)
 }

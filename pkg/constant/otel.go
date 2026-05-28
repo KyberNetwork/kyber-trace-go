@@ -1,5 +1,7 @@
 package constant
 
+import "time"
+
 const (
 	OtelDefaultServiceName                         = "default-service-name"
 	OtelDefaultServiceVersion                      = "0.1.0"
@@ -13,4 +15,5 @@ const (
 	OtelDefaultEnabledExponentialHistogrammetrics  = false
 	OtelDefaultExponentialHistogramMetricsMaxSize  = 30
 	OtelDefaultExponentialHistogramMetricsMaxScale = 3
+	OtelDefaultRuntimeMetricsInterval              = 15 * time.Second
 )
