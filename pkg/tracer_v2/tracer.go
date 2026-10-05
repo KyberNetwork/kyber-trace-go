@@ -6,7 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/KyberNetwork/kyber-trace-go/pkg/constant"
 	kybermetric "github.com/KyberNetwork/kyber-trace-go/pkg/metric"
+	"github.com/KyberNetwork/kyber-trace-go/pkg/util/env"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
@@ -97,7 +99,9 @@ func (_self *Span) End() {
 	ensureRecordLoop()
 
 	elapsed := float64(time.Since(_self.startTime).Milliseconds())
-	kvs := make([]attribute.KeyValue, 0, 1+len(_self.tags))
+	serviceVersion := env.StringFromEnv(constant.EnvKeyOtelServiceVersion, constant.OtelDefaultServiceVersion)
+	kvs := make([]attribute.KeyValue, 0, 2+len(_self.tags))
+	kvs = append(kvs, attribute.String("service_version", serviceVersion))
 	kvs = append(kvs, attribute.String("span_name", _self.operationName))
 	kvs = append(kvs, _self.tags...)
 
