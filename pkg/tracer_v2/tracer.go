@@ -18,11 +18,11 @@ var (
 	instrumentsOnce sync.Once
 	callsCounter    metric.Int64Counter
 	durationHist    metric.Float64Histogram
-	recordCh        chan *recordEvent
-	recordOnce      sync.Once
+	recorderCh      chan *recorderEvent
+	recorderOnce    sync.Once
 )
 
-type recordEvent struct {
+type recorderEvent struct {
 	elapsed float64
 	attrs   metric.MeasurementOption
 }
@@ -60,19 +60,17 @@ func initInstruments() bool {
 	return true
 }
 
-func ensureInstruments() {
-	instrumentsOnce.Do(func() {
-		if !initInstruments() {
-			instrumentsOnce = sync.Once{}
-		}
-	})
-}
-
-func ensureRecordLoop() {
-	recordOnce.Do(func() {
-		recordCh = make(chan *recordEvent, 1024)
+func ensureRecorder() {
+	recorderOnce.Do(func() {
+		recorderCh = make(chan *recorderEvent, 1024)
 		go func() {
-			for ev := range recordCh {
+			for ev := range recorderCh {
+				instrumentsOnce.Do(func() {
+					if !initInstruments() {
+						instrumentsOnce = sync.Once{}
+					}
+				})
+
 				if callsCounter == nil || durationHist == nil {
 					continue
 				}
@@ -95,8 +93,7 @@ func (_self *Span) SetTag(name string, value string) {
 }
 
 func (_self *Span) End() {
-	ensureInstruments()
-	ensureRecordLoop()
+	ensureRecorder()
 
 	elapsed := float64(time.Since(_self.startTime).Milliseconds())
 	serviceVersion := env.StringFromEnv(constant.EnvKeyOtelServiceVersion, constant.OtelDefaultServiceVersion)
@@ -106,7 +103,7 @@ func (_self *Span) End() {
 	kvs = append(kvs, _self.tags...)
 
 	select {
-	case recordCh <- &recordEvent{
+	case recorderCh <- &recorderEvent{
 		elapsed: elapsed,
 		attrs:   metric.WithAttributes(kvs...),
 	}:
