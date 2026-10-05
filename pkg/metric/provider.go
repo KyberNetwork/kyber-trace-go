@@ -3,6 +3,7 @@ package metric
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"sync"
 	"time"
@@ -114,6 +115,8 @@ func InitProvider() {
 		fmt.Printf("kyber-trace-go: failed to init metric provider, %s\n", err)
 		return
 	}
+
+	log.Printf("metric: initializing provider")
 
 	if env.BoolFromEnv(constant.EnvKeyOtelEnabledExponentialHistogramMetrics) {
 		exponentialHistogramView := metric.NewView(
