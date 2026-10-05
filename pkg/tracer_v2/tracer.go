@@ -31,8 +31,7 @@ type recordEvent struct {
 
 func ensureInstruments() {
 	instrumentsOnce.Do(func() {
-		serviceName := env.StringFromEnv(constant.EnvKeyOtelServiceName, constant.OtelDefaultServiceName)
-		m := kybermetric.Provider().Meter(serviceName)
+		m := kybermetric.Meter()
 
 		var err error
 		callsCounter, err = m.Int64Counter(
