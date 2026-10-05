@@ -6,10 +6,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/KyberNetwork/kyber-trace-go/pkg/constant"
 	kybermetric "github.com/KyberNetwork/kyber-trace-go/pkg/metric"
+	"github.com/KyberNetwork/kyber-trace-go/pkg/util/env"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/sdk/resource"
 )
 
 var (
@@ -18,8 +19,6 @@ var (
 	durationHist    metric.Float64Histogram
 	recordCh        chan *recordEvent
 	recordOnce      sync.Once
-	resourceAttrs   []attribute.KeyValue
-	resourceOnce    sync.Once
 )
 
 type recordEvent struct {
@@ -29,7 +28,8 @@ type recordEvent struct {
 
 func ensureInstruments() {
 	instrumentsOnce.Do(func() {
-		m := kybermetric.Meter()
+		serviceName := env.StringFromEnv(constant.EnvKeyOtelServiceName, constant.OtelDefaultServiceName)
+		m := kybermetric.Provider().Meter(serviceName)
 
 		var err error
 		callsCounter, err = m.Int64Counter(
@@ -83,15 +83,9 @@ func (_self *Span) End() {
 	ensureInstruments()
 	ensureRecordLoop()
 
-	resourceOnce.Do(func() {
-		resourceAttrs = resource.Default().Attributes()
-		log.Printf("tracer: resource attributes: %v", resourceAttrs)
-	})
-
 	elapsed := float64(time.Since(_self.startTime).Milliseconds())
-	kvs := make([]attribute.KeyValue, 0, 1+len(resourceAttrs)+len(_self.tags))
+	kvs := make([]attribute.KeyValue, 0, 1+len(_self.tags))
 	kvs = append(kvs, attribute.String("span_name", _self.operationName))
-	kvs = append(kvs, resourceAttrs...)
 	kvs = append(kvs, _self.tags...)
 
 	select {
