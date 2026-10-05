@@ -7,6 +7,7 @@ import (
 	"time"
 
 	kybermetric "github.com/KyberNetwork/kyber-trace-go/pkg/metric"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 )
@@ -24,28 +25,43 @@ type recordEvent struct {
 	attrs   metric.MeasurementOption
 }
 
+func initInstruments() bool {
+	kybermetric.InitProvider()
+	if otel.GetMeterProvider() == nil {
+		return false
+	}
+	m := kybermetric.Meter()
+
+	var err error
+	callsCounter, err = m.Int64Counter(
+		"kybernetwork.span.metrics.calls.total",
+		metric.WithUnit("{call}"),
+		metric.WithDescription("Number of span calls"),
+	)
+	if err != nil {
+		log.Printf("tracer: failed to create calls counter: %s", err)
+
+		return false
+	}
+
+	durationHist, err = m.Float64Histogram(
+		"kybernetwork.span.metrics.duration.milliseconds",
+		metric.WithUnit("ms"),
+		metric.WithDescription("Span duration in milliseconds"),
+	)
+	if err != nil {
+		log.Printf("tracer: failed to create duration histogram: %s", err)
+
+		return false
+	}
+
+	return true
+}
+
 func ensureInstruments() {
 	instrumentsOnce.Do(func() {
-		kybermetric.InitProvider()
-		m := kybermetric.Meter()
-
-		var err error
-		callsCounter, err = m.Int64Counter(
-			"kybernetwork.span.metrics.calls.total",
-			metric.WithUnit("{call}"),
-			metric.WithDescription("Number of span calls"),
-		)
-		if err != nil {
-			log.Printf("tracer: failed to create calls counter: %s", err)
-		}
-
-		durationHist, err = m.Float64Histogram(
-			"kybernetwork.span.metrics.duration.milliseconds",
-			metric.WithUnit("ms"),
-			metric.WithDescription("Span duration in milliseconds"),
-		)
-		if err != nil {
-			log.Printf("tracer: failed to create duration histogram: %s", err)
+		if !initInstruments() {
+			instrumentsOnce = sync.Once{}
 		}
 	})
 }
@@ -55,13 +71,12 @@ func ensureRecordLoop() {
 		recordCh = make(chan *recordEvent, 1024)
 		go func() {
 			for ev := range recordCh {
-				if callsCounter != nil {
-					callsCounter.Add(context.Background(), 1, ev.attrs)
+				if callsCounter == nil || durationHist == nil {
+					continue
 				}
 
-				if durationHist != nil {
-					durationHist.Record(context.Background(), ev.elapsed, ev.attrs)
-				}
+				callsCounter.Add(context.Background(), 1, ev.attrs)
+				durationHist.Record(context.Background(), ev.elapsed, ev.attrs)
 			}
 		}()
 	})
