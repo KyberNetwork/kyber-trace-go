@@ -11,6 +11,7 @@ import (
 	"github.com/KyberNetwork/kyber-trace-go/pkg/util/env"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/sdk/resource"
 )
 
 var (
@@ -19,6 +20,8 @@ var (
 	durationHist    metric.Float64Histogram
 	recordCh        chan *recordEvent
 	recordOnce      sync.Once
+	resourceAttrs   []attribute.KeyValue
+	resourceOnce    sync.Once
 )
 
 type recordEvent struct {
@@ -83,9 +86,17 @@ func (_self *Span) End() {
 	ensureInstruments()
 	ensureRecordLoop()
 
+	resourceOnce.Do(func() {
+		resourceAttrs = resource.Default().Attributes()
+		resourceAttrs = append(resourceAttrs, attribute.String("service_version",
+			env.StringFromEnv(constant.EnvKeyOtelServiceVersion, constant.OtelDefaultServiceVersion)))
+		log.Printf("tracer: resource attributes: %v", resourceAttrs)
+	})
+
 	elapsed := float64(time.Since(_self.startTime).Milliseconds())
-	kvs := make([]attribute.KeyValue, 0, 1+len(_self.tags))
+	kvs := make([]attribute.KeyValue, 0, 1+len(resourceAttrs)+len(_self.tags))
 	kvs = append(kvs, attribute.String("span_name", _self.operationName))
+	kvs = append(kvs, resourceAttrs...)
 	kvs = append(kvs, _self.tags...)
 
 	select {
