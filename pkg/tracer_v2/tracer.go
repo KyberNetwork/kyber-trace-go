@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
+	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
 )
 
 var (
@@ -86,9 +87,15 @@ func (_self *Span) End() {
 	ensureRecordLoop()
 
 	resourceOnce.Do(func() {
-		resourceAttrs = resource.Default().Attributes()
-		resourceAttrs = append(resourceAttrs, attribute.String("service_version",
-			env.StringFromEnv(constant.EnvKeyOtelServiceVersion, constant.OtelDefaultServiceVersion)))
+		allAttrs := newResources().Attributes()
+		for _, attr := range allAttrs {
+			if attr.Key == semconv.ServiceNameKey {
+				continue
+			}
+
+			resourceAttrs = append(resourceAttrs, attr)
+		}
+
 		log.Printf("tracer: resource attributes: %v", resourceAttrs)
 	})
 
@@ -105,6 +112,28 @@ func (_self *Span) End() {
 	}:
 	default:
 	}
+}
+
+func newResources() *resource.Resource {
+	resources := resource.Default()
+
+	extraResources, err := resource.New(context.Background(),
+		resource.WithFromEnv(),
+		resource.WithHost(),
+		resource.WithAttributes(
+			semconv.ServiceName(env.StringFromEnv(constant.EnvKeyOtelServiceName, constant.OtelDefaultServiceName)),
+			semconv.ServiceVersion(env.StringFromEnv(constant.EnvKeyOtelServiceVersion, constant.OtelDefaultServiceVersion)),
+		))
+	if err != nil {
+		return resources
+	}
+
+	resources, err = resource.Merge(resources, extraResources)
+	if err != nil {
+		return resources
+	}
+
+	return resources
 }
 
 func StartSpanFromContext(ctx context.Context, operationName string) (*Span, context.Context) {
