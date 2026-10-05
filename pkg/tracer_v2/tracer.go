@@ -11,8 +11,6 @@ import (
 	"github.com/KyberNetwork/kyber-trace-go/pkg/util/env"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
 )
 
 var (
@@ -21,8 +19,6 @@ var (
 	durationHist    metric.Float64Histogram
 	recordCh        chan *recordEvent
 	recordOnce      sync.Once
-	resourceAttrs   []attribute.KeyValue
-	resourceOnce    sync.Once
 )
 
 type recordEvent struct {
@@ -86,23 +82,11 @@ func (_self *Span) End() {
 	ensureInstruments()
 	ensureRecordLoop()
 
-	resourceOnce.Do(func() {
-		allAttrs := newResources().Attributes()
-		for _, attr := range allAttrs {
-			if attr.Key == semconv.ServiceNameKey {
-				continue
-			}
-
-			resourceAttrs = append(resourceAttrs, attr)
-		}
-
-		log.Printf("tracer: resource attributes: %v", resourceAttrs)
-	})
-
 	elapsed := float64(time.Since(_self.startTime).Milliseconds())
-	kvs := make([]attribute.KeyValue, 0, 1+len(resourceAttrs)+len(_self.tags))
+	serviceVersion := env.StringFromEnv(constant.EnvKeyOtelServiceVersion, constant.OtelDefaultServiceVersion)
+	kvs := make([]attribute.KeyValue, 0, 2+len(_self.tags))
+	kvs = append(kvs, attribute.String("service_version", serviceVersion))
 	kvs = append(kvs, attribute.String("span_name", _self.operationName))
-	kvs = append(kvs, resourceAttrs...)
 	kvs = append(kvs, _self.tags...)
 
 	select {
@@ -112,28 +96,6 @@ func (_self *Span) End() {
 	}:
 	default:
 	}
-}
-
-func newResources() *resource.Resource {
-	resources := resource.Default()
-
-	extraResources, err := resource.New(context.Background(),
-		resource.WithFromEnv(),
-		resource.WithHost(),
-		resource.WithAttributes(
-			semconv.ServiceName(env.StringFromEnv(constant.EnvKeyOtelServiceName, constant.OtelDefaultServiceName)),
-			semconv.ServiceVersion(env.StringFromEnv(constant.EnvKeyOtelServiceVersion, constant.OtelDefaultServiceVersion)),
-		))
-	if err != nil {
-		return resources
-	}
-
-	resources, err = resource.Merge(resources, extraResources)
-	if err != nil {
-		return resources
-	}
-
-	return resources
 }
 
 func StartSpanFromContext(ctx context.Context, operationName string) (*Span, context.Context) {
