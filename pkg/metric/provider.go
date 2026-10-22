@@ -3,6 +3,7 @@ package metric
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"sync"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"google.golang.org/grpc"
@@ -22,6 +24,21 @@ import (
 
 var provider *metric.MeterProvider
 var lock sync.Mutex
+
+type loggingExporter struct {
+	metric.Exporter
+}
+
+func (_self *loggingExporter) Export(ctx context.Context, rm *metricdata.ResourceMetrics) error {
+	err := _self.Exporter.Export(ctx, rm)
+	if err != nil {
+		log.Printf("metric: failed to export, %s", err)
+	} else {
+		log.Printf("metric: exported successfully")
+	}
+
+	return err
+}
 
 func newGRPCExporter(ctx context.Context, agentHost string, isInsecure bool) (metric.Exporter, error) {
 	addr := net.JoinHostPort(agentHost, env.StringFromEnv(
@@ -37,7 +54,7 @@ func newGRPCExporter(ctx context.Context, agentHost string, isInsecure bool) (me
 	if err != nil {
 		return nil, err
 	}
-	return exporter, nil
+	return &loggingExporter{exporter}, nil
 }
 
 func newHTTPExporter(ctx context.Context, agentHost string, isInsecure bool) (metric.Exporter, error) {
@@ -53,7 +70,7 @@ func newHTTPExporter(ctx context.Context, agentHost string, isInsecure bool) (me
 	if err != nil {
 		return nil, err
 	}
-	return exporter, nil
+	return &loggingExporter{exporter}, nil
 }
 
 func newOTLPExporter() (metric.Exporter, error) {
@@ -114,6 +131,8 @@ func InitProvider() {
 		fmt.Printf("kyber-trace-go: failed to init metric provider, %s\n", err)
 		return
 	}
+
+	log.Printf("metric: initializing provider")
 
 	if env.BoolFromEnv(constant.EnvKeyOtelEnabledExponentialHistogramMetrics) {
 		exponentialHistogramView := metric.NewView(
