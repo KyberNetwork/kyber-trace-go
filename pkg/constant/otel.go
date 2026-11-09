@@ -16,4 +16,7 @@ const (
 	OtelDefaultExponentialHistogramMetricsMaxSize  = 30
 	OtelDefaultExponentialHistogramMetricsMaxScale = 3
 	OtelDefaultRuntimeMetricsInterval              = 15 * time.Second
+	OtelDefaultSpanMetricsMaxSpanNames             = 1000
+	OtelSpanStartedMetricName                      = "kybernetwork.span.started"
+	OtelSpanMetricsOverflowSpanName                = "_other"
 )

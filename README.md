@@ -51,6 +51,20 @@ When initializing the global TracerProvider and global MeterProvider, `kyber-tra
   - OTEL_SERVICE_NAME: Name of your service which can be used in your query in grafana jaeger. If you are using helm chart with dependency `base-service` version `0.5.16` or later, this environment variable will be injected via helm chart, and you don't need to set it in your `values.yaml` in `kyber-application`. Otherwise, you have to set it yourself.
   - OTEL_SERVICE_VERSION: The current version of your service. If you are using helm chart with dependency `base-service` version `0.5.16` or later, this environment variable will be injected via helm chart, and you don't need to set it in your `values.yaml` in `kyber-application`. Otherwise, you have to set it to your current image tag.
   - OTEL_TRACE_SAMPLE_RATE: The default value is `0.5`. If you want your all traces and spans will be recorded, set `OTEL_TRACE_SAMPLE_RATE = 1`
+  - OTEL_SPAN_METRICS_ENABLED: Opt-in. Set `true` to count every span started in the `kybernetwork.span.started` metric (see [Span started counter](#span-started-counter)). Disabled by default.
+  - OTEL_SPAN_METRICS_MAX_SPAN_NAMES: The maximum number of distinct span names reported by `kybernetwork.span.started`. The default value is `1000`. Set `0` for no limit.
+
+### Span started counter
+Set `OTEL_SPAN_METRICS_ENABLED=true` (together with `OTEL_ENABLED=true`) to get the counter `kybernetwork.span.started` (shown in Prometheus as `kybernetwork_span_started_total`). It counts every span started through the global `TracerProvider`, including spans from `otelgin`, `otelgorm` and other instrumentation libraries, with the labels:
+  - `span.name`: the span name, e.g. `GET /users/:id`
+  - `span.kind`: `server`, `client`, `internal`, `producer` or `consumer`
+
+The count is taken before the sampling decision, so it is exact and does not depend on `OTEL_TRACE_SAMPLE_RATE`. Sampling decisions are unchanged. Use it for request/call rates by span name, and use traces for latency and errors.
+
+Notes:
+  - The metric is exported by the global `MeterProvider`, so your service must also import `github.com/KyberNetwork/kyber-trace-go/pkg/metric` (the `tools` package does both).
+  - Span names must be low-cardinality: put IDs in span attributes, not in the name. After `OTEL_SPAN_METRICS_MAX_SPAN_NAMES` distinct names, new names are reported as `span.name="_other"`. If you see `_other`, look for span names that contain IDs.
+  - If the trace exporter cannot be created, spans are still counted but not exported. In that case `kyber-trace-go` registers a `TracerProvider` that drops every span, so `trace.SpanFromContext(ctx).SpanContext()` returns trace IDs that don't exist in the tracing backend.
 
 ### For gin framework
 If your application is using gin framework, you can use [this package](https://pkg.go.dev/go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin) to trace requests to your application automatically. You can see the example at https://github.com/KyberNetwork/kyber-trace-go/blob/main/example/gin.go
