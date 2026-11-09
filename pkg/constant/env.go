@@ -16,4 +16,5 @@ const (
 	EnvKeyOtelExponentialHistogramMetricsMaxScale = "OTEL_EXPONENTIAL_HISTOGRAM_METRICS_MAX_SCALE"
 	EnvKeyOtelExponentialHistogramMetricsMaxSize  = "OTEL_EXPONENTIAL_HISTOGRAM_METRICS_MAX_SIZE"
 	EnvKeyOtelRuntimeMetricsInterval              = "OTEL_RUNTIME_METRICS_INTERVAL"
+	EnvKeyOtelTraceMode                           = "OTEL_TRACE_MODE"
 )

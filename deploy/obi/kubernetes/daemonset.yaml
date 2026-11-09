@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: obi
+  namespace: observability
+  labels:
+    app: obi
+spec:
+  selector:
+    matchLabels:
+      app: obi
+  template:
+    metadata:
+      labels:
+        app: obi
+    spec:
+      hostPID: true # needed to see processes of all pods on the node
+      serviceAccountName: obi
+      containers:
+        - name: obi
+          image: otel/ebpf-instrument:v1.0.0
+          securityContext:
+            # privileged (or CAP_SYS_ADMIN) is required for Go trace context propagation
+            # and for activating the Go Auto SDK (bpf_probe_write_user)
+            privileged: true
+          env:
+            - name: OTEL_EBPF_CONFIG_PATH
+              value: /config/obi-config.yml
+            - name: OTEL_EBPF_KUBE_METADATA_ENABLE
+              value: 'true'
+          volumeMounts:
+            - name: obi-config
+              mountPath: /config
+            - name: tracefs
+              mountPath: /sys/kernel/tracing
+            - name: securityfs
+              mountPath: /sys/kernel/security
+              readOnly: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+      volumes:
+        - name: obi-config
+          configMap:
+            name: obi-config
+        - name: tracefs
+          hostPath:
+            path: /sys/kernel/tracing
+            type: Directory
+        - name: securityfs
+          hostPath:
+            path: /sys/kernel/security
+            type: Directory

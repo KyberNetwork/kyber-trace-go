@@ -16,4 +16,6 @@ const (
 	OtelDefaultExponentialHistogramMetricsMaxSize  = 30
 	OtelDefaultExponentialHistogramMetricsMaxScale = 3
 	OtelDefaultRuntimeMetricsInterval              = 15 * time.Second
+	OtelTraceModeSDK                               = "sdk"
+	OtelTraceModeOBI                               = "obi"
 )
