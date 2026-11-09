@@ -1,0 +1,45 @@
+# Local playground for the OBI (OpenTelemetry eBPF Instrumentation) approach.
+# Requires a Linux host (or Docker Desktop's Linux VM) with kernel 5.8+ and BTF.
+#   docker compose -f deploy/obi/docker/compose.yaml up --build
+#   curl http://localhost:8080/api/v1/greeting
+services:
+  app:
+    build:
+      context: ../../..
+      dockerfile: deploy/obi/docker/Dockerfile
+    ports:
+      - '8080:8080'
+    environment:
+      OTEL_ENABLED: 'true'
+      OTEL_TRACE_MODE: obi
+      OTEL_SERVICE_NAME: kyber-trace-go-example
+      OTEL_SERVICE_VERSION: 0.1.0
+      # custom metrics are still pushed by the in-process SDK
+      OTEL_AGENT_HOST: collector
+      OTEL_METRIC_AGENT_GRPC_PORT: '4317'
+      OTEL_INSECURE: 'true'
+
+  obi:
+    image: otel/ebpf-instrument:v1.0.0
+    pid: host
+    privileged: true
+    volumes:
+      - /sys/kernel/tracing:/sys/kernel/tracing
+      - /sys/kernel/security:/sys/kernel/security
+      - /sys/fs/cgroup:/sys/fs/cgroup
+      - /sys/fs/bpf:/sys/fs/bpf
+    environment:
+      # select by executable: selecting open port 8080 would also match dockerd's port-forwarding proxy
+      OTEL_EBPF_AUTO_TARGET_EXE: '*/obi-example'
+      OTEL_EBPF_BPF_CONTEXT_PROPAGATION: headers
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://collector:4318
+      OTEL_EBPF_TRACE_PRINTER: text
+    depends_on:
+      - app
+      - collector
+
+  collector:
+    image: otel/opentelemetry-collector-contrib:0.165.0
+    command: ['--config=/etc/otelcol/config.yaml']
+    volumes:
+      - ./collector-config.yaml:/etc/otelcol/config.yaml:ro

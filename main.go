@@ -6,4 +6,5 @@ func main() {
 	//example.PushMetric()
 	//example.Tracing()
 	//example.GinFramework()
+	//example.OBI()
 }

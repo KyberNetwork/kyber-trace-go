@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -104,11 +105,28 @@ func newResources() *resource.Resource {
 	return resources
 }
 
+// IsOBIMode reports whether spans are expected to be captured and exported by
+// OpenTelemetry eBPF Instrumentation (OBI) running outside the process, instead of the in-process SDK.
+// ref: https://opentelemetry.io/docs/zero-code/go/choosing-auto-instrumentation/
+func IsOBIMode() bool {
+	mode := env.StringFromEnv(constant.EnvKeyOtelTraceMode, constant.OtelTraceModeSDK)
+	return strings.EqualFold(mode, constant.OtelTraceModeOBI)
+}
+
 func InitProvider() {
 	lock.Lock()
 	defer lock.Unlock()
 
 	if provider != nil {
+		return
+	}
+
+	if IsOBIMode() {
+		// Registering a global TracerProvider prevents OBI from activating the Go Auto SDK,
+		// so leave the global (delegating) TracerProvider untouched. OBI hooks into it via eBPF
+		// and exports spans created by Tracer() together with the HTTP/gRPC/SQL spans it captures.
+		otel.SetTextMapPropagator(propagation.TraceContext{})
+		fmt.Println("kyber-trace-go: OTEL_TRACE_MODE=obi, spans will be exported by OpenTelemetry eBPF Instrumentation")
 		return
 	}
 
