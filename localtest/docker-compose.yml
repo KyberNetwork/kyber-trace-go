@@ -1,0 +1,29 @@
+# Local stack for testing kybernetwork.span.started.
+# Mirrors the agent ports used in Kyber clusters: traces gRPC 4317, metrics gRPC 4315.
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.115.1
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4317:4317" # OTLP gRPC, traces
+      - "4315:4315" # OTLP gRPC, metrics
+      - "8889:8889" # Prometheus exporter
+    depends_on: [jaeger]
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16689:16686" # UI: http://localhost:16689
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9091:9090" # UI: http://localhost:9091
+    depends_on: [otel-collector]

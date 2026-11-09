@@ -6,6 +6,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/KyberNetwork/kyber-trace-go/pkg/constant"
 )
@@ -44,7 +45,8 @@ func (s *countingSampler) ShouldSample(p sdktrace.SamplingParameters) sdktrace.S
 	res := s.next.ShouldSample(p)
 	s.counter.Add(p.ParentContext, 1, metric.WithAttributes(
 		attribute.String("span.name", s.names.get(p.Name)),
-		attribute.String("span.kind", p.Kind.String()),
+		// Match the kind the SDK records: an unset kind becomes internal.
+		attribute.String("span.kind", trace.ValidateSpanKind(p.Kind).String()),
 	))
 	return res
 }

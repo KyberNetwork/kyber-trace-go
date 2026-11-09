@@ -217,3 +217,11 @@ func TestCountOnlyProvider(t *testing.T) {
 		t.Errorf("counted %d spans, want 3", total)
 	}
 }
+
+func TestCountingSamplerDefaultsSpanKindToInternal(t *testing.T) {
+	got, _ := startSpans(t, sdktrace.AlwaysSample(), 0, []string{"op"}, trace.SpanKindUnspecified)
+
+	if want := map[string]int64{"op|internal": 1}; fmt.Sprint(got) != fmt.Sprint(want) {
+		t.Errorf("counter = %v, want %v", got, want)
+	}
+}

@@ -1,0 +1,31 @@
+receivers:
+  otlp/traces:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+  otlp/metrics:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4315
+
+connectors:
+  # Counts spans that reached the collector, i.e. only sampled spans.
+  # Used as the baseline to compare against kybernetwork.span.started.
+  spanmetrics: {}
+
+exporters:
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+  prometheus:
+    endpoint: 0.0.0.0:8889
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp/traces]
+      exporters: [otlp/jaeger, spanmetrics]
+    metrics:
+      receivers: [otlp/metrics, spanmetrics]
+      exporters: [prometheus]
